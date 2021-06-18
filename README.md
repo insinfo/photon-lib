@@ -8,7 +8,7 @@ compiled with:
 ```console
  wasm-pack build --target no-modules --debug
 ```
-server with:
+serve with:
 
 ```console
  http-server .\pkg\
