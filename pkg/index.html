@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>teste</title>
+
+    <script id="script-photon" src="photon_rs.js"></script>
+    <script>
+        window.photon;
+        async function initPhoton() {
+            var scri = document.querySelector('#script-photon');
+             var url = scri.src.replace(/\.js$/, '_bg.wasm');
+            window.photon = await wasm_bindgen(url);
+            // photon.greet();
+            //console.log(window.photon);
+        }
+
+        initPhoton();
+
+        function filterImage() {
+            // Create a canvas and get a 2D context from the canvas
+            var canvas = document.getElementById("canvas");
+            var ctx = canvas.getContext("2d");
+            var newimg = document.getElementById('img');
+
+            // Draw the image element onto the canvas
+            ctx.drawImage(newimg, 0, 0);
+
+            console.log(canvas.width); 
+            console.log(newimg);
+            console.log(ctx);
+
+            // Convert the ImageData found in the canvas to a PhotonImage (so that it can communicate with the core Rust library)
+            let image = photon.open_image(canvas, ctx);
+
+            // Filter the image, the PhotonImage's raw pixels are modified
+            //  window.photon.filter(image, "radio");
+
+            // Place the modified image back on the canvas
+            //  window.photon.putImageData(canvas, ctx, image);
+        }
+        //initPhoton();
+        // photon.greet();
+
+
+        window.onload = function (e) {
+
+            setTimeout(function (e) {
+                filterImage();
+            }, 3000);
+
+        };
+    </script>
+</head>
+
+<body>
+    <h1>teste</h1>
+    <img id="img"
+        src="https://dyl80ryjxr1ke.cloudfront.net/external_assets/hero_examples/hair_beach_v391182663/original.jpeg"
+        width="640px" height="480px" style="width: 640px;height: 480px;">
+    <canvas id="canvas" width="640px" height="480px" style="width: 640px;height: 480px;"></canvas>
+</body>
+
+</html>
