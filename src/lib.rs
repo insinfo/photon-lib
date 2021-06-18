@@ -379,6 +379,46 @@ pub fn open_image(
         height: canvas.height(),
     }
 }
+//isaque alterou aqui
+
+#[wasm_bindgen]
+extern "C" {
+    // Use `js_namespace` here to bind `console.log(..)` instead of just
+    // `log(..)`
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+
+    // The `console.log` is quite polymorphic, so we can bind it with multiple
+    // signatures. Note that we need to use `js_name` to ensure we always call
+    // `log` in JS.
+    #[wasm_bindgen(js_namespace = console, js_name = log)]
+    fn log_u32(a: u32);
+
+    // Multiple arguments too!
+    #[wasm_bindgen(js_namespace = console, js_name = log)]
+    fn log_many(a: &str, b: &str);
+}
+macro_rules! console_log {
+    // Note that this is using the `log` function imported above during
+    // `bare_bones`
+    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+}
+
+#[wasm_bindgen]
+pub fn open_image_test(
+    canvas: HtmlCanvasElement,
+    ctx: CanvasRenderingContext2d,
+) -> PhotonImage {
+    console_log!("open_image_test {:?}", canvas);
+    let imgdata = get_image_data(&canvas, &ctx);
+    let raw_pixels = to_raw_pixels(imgdata);
+
+    PhotonImage {
+        raw_pixels,
+        width: canvas.width(),
+        height: canvas.height(),
+    }
+}
 
 /// Convert ImageData to a raw pixel vec of u8s.
 #[wasm_bindgen]
