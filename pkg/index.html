@@ -10,9 +10,7 @@
         async function initPhoton() {
             var scri = document.querySelector('#script-photon');
              var url = scri.src.replace(/\.js$/, '_bg.wasm');
-            window.photon = await wasm_bindgen(url);
-            // photon.greet();
-            //console.log(window.photon);
+            window.photon = await wasm_bindgen(url);          
         }
 
         initPhoton();
@@ -39,15 +37,11 @@
             // Place the modified image back on the canvas
             //  window.photon.putImageData(canvas, ctx, image);
         }
-        //initPhoton();
-        // photon.greet();
-
-
+      
         window.onload = function (e) {
-
             setTimeout(function (e) {
                 filterImage();
-            }, 3000);
+            }, 2000);
 
         };
     </script>
