@@ -60,6 +60,8 @@ version = "0.3"
 features = [
   "Document",
   "Element",
+ # "ArrayBuffer",
+  "Blob",
   "HtmlElement",
   "Node",
   "Window",

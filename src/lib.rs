@@ -42,11 +42,18 @@
 use base64::{decode, encode};
 use image::DynamicImage::ImageRgba8;
 use image::{GenericImage, GenericImageView};
+
+use image::io::Reader  as ImageReader; //se atentar se isso não vai impactar no wasm
+use image::ImageFormat;
+use std::io::Cursor;
+
+use js_sys::ArrayBuffer;
+use js_sys::Uint8Array;
+
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::Clamped;
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
-
+use web_sys::{Blob, CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
 #[cfg(feature = "wee_alloc")]
@@ -403,21 +410,39 @@ macro_rules! console_log {
     // `bare_bones`
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
-
+//Blob
+/// open image from a js Uint8Array;
 #[wasm_bindgen]
-pub fn open_image_test(
-    canvas: HtmlCanvasElement,
-    ctx: CanvasRenderingContext2d,
-) -> PhotonImage {
-    console_log!("open_image_test {:?}", canvas);
-    let imgdata = get_image_data(&canvas, &ctx);
+pub fn open_image_from_array_buffer(uint8array: Uint8Array) {
+    //-> PhotonImage
+
+    console_log!("open_image_from_array_buffer {:?}", uint8array);
+    //let arr = unsafe { Uint8Array::view(my_buf) };
+    //let arr_clone = Uint8Array::new(arr).buffer();
+
+    //let arr_clone = Uint8Array::new(&array_buffer).buffer();
+    //let mut slice = vec![0; uint8array.length()];
+    // uint8array.copy_to(&mut slice[..]);
+    let raw_data: Vec<u8> = uint8array.to_vec();
+
+    console_log!("open_image_from_array_buffer {:?}", raw_data);
+
+    // let image  = ImageReader::new(Cursor::new(raw_data)).with_guessed_format().decode();    
+
+    let image = ImageReader::with_format(Cursor::new(raw_data), ImageFormat::Jpeg).decode();
+
+    console_log!("open_image_from_array_buffer {:?}", image);
+
+    //Uint8Array::from(my_buf).buffer();
+
+    /*let imgdata = get_image_data(&canvas, &ctx);
     let raw_pixels = to_raw_pixels(imgdata);
 
     PhotonImage {
         raw_pixels,
         width: canvas.width(),
         height: canvas.height(),
-    }
+    }*/
 }
 
 /// Convert ImageData to a raw pixel vec of u8s.

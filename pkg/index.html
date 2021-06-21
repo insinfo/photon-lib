@@ -35,13 +35,29 @@
         }
 
         window.onload = function (e) {
-
+            var inputFile = document.getElementById('file');
+            inputFile.onchange = async function (e) {
+                var arrayBuffer = await readFileAsArrayBuffer(inputFile.files[0]);
+                var uint8View = new Uint8Array(arrayBuffer);
+                let image = photon.open_image_from_array_buffer(uint8View);
+                console.log(uint8View);
+            }
         };
+
+        async function readFileAsArrayBuffer(file) {
+            let result_base64 = await new Promise((resolve) => {
+                let fileReader = new FileReader();
+                fileReader.onload = (e) => resolve(fileReader.result);
+                fileReader.readAsArrayBuffer(file);
+            });
+            return result_base64;
+        }
     </script>
 </head>
 
 <body>
     <h1>teste</h1>
+    <input type="file" id="file"><br>
     <img id="img" src="original.jpeg" width="640" height="480">
     <canvas id="canvas" width="640" height="480"></canvas>
 </body>
