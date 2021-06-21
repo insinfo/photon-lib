@@ -41,19 +41,22 @@
 
 use base64::{decode, encode};
 use image::DynamicImage::ImageRgba8;
-use image::{GenericImage, GenericImageView};
+use image::{GenericImage, GenericImageView, ImageBuffer};
 
-use image::io::Reader  as ImageReader; //se atentar se isso não vai impactar no wasm
-use image::ImageFormat;
+use image::io::Reader as ImageReader; //se atentar se isso não vai impactar no wasm
 use std::io::Cursor;
 
+/*use image::ImageFormat;
 use js_sys::ArrayBuffer;
-use js_sys::Uint8Array;
+use js_sys::Uint8Array;*/
 
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::Clamped;
-use web_sys::{Blob, CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, ImageData}; /*Blob,*/
+
+use console_error_panic_hook;
+
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
 #[cfg(feature = "wee_alloc")]
@@ -410,39 +413,116 @@ macro_rules! console_log {
     // `bare_bones`
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
-//Blob
-/// open image from a js Uint8Array;
+
+/// open image from a js Uint8Array and convert to rgba8 PhotonImage;
 #[wasm_bindgen]
-pub fn open_image_from_array_buffer(uint8array: Uint8Array) {
-    //-> PhotonImage
+pub fn open_image_from_uint8array(bytes: Vec<u8>) -> PhotonImage {
+    console_error_panic_hook::set_once();
+    //console_log!("open_image_from_array_buffer ");
 
-    console_log!("open_image_from_array_buffer {:?}", uint8array);
-    //let arr = unsafe { Uint8Array::view(my_buf) };
-    //let arr_clone = Uint8Array::new(arr).buffer();
+    /*let img = ImageReader::new(Cursor::new(bytes))
+    .with_guessed_format()
+    .unwrap()
+    .decode()
+    .unwrap();*/
 
-    //let arr_clone = Uint8Array::new(&array_buffer).buffer();
-    //let mut slice = vec![0; uint8array.length()];
-    // uint8array.copy_to(&mut slice[..]);
-    let raw_data: Vec<u8> = uint8array.to_vec();
+    //let img = ImageReader::new(Cursor::new(bytes))
+    //   .with_guessed_format()
+    let img = image::load_from_memory(&bytes).unwrap();
+    //.into_rgba8();
 
-    console_log!("open_image_from_array_buffer {:?}", raw_data);
-
-    // let image  = ImageReader::new(Cursor::new(raw_data)).with_guessed_format().decode();    
-
-    let image = ImageReader::with_format(Cursor::new(raw_data), ImageFormat::Jpeg).decode();
-
-    console_log!("open_image_from_array_buffer {:?}", image);
-
-    //Uint8Array::from(my_buf).buffer();
-
-    /*let imgdata = get_image_data(&canvas, &ctx);
-    let raw_pixels = to_raw_pixels(imgdata);
-
+    let (width, height) = img.dimensions();
+    // Convert the DynamicImage type to raw vec representing RGBA pixels (not RGB)
+    let raw_pixels = img.into_rgba8().to_vec();
     PhotonImage {
         raw_pixels,
-        width: canvas.width(),
-        height: canvas.height(),
-    }*/
+        width: width,
+        height: height,
+    }
+}
+/// create um uint8array of PhotonImage to uploud/download or manipulate on JavaScript
+/// 
+/// var downloadBlob, downloadURL;
+///        downloadBlob = function (data, fileName, mimeType) {
+///            var blob, url;
+///            blob = new Blob([data], {
+///                type: mimeType
+///            });
+///            url = window.URL.createObjectURL(blob);
+///            downloadURL(url, fileName);
+///            setTimeout(function () {
+///                return window.URL.revokeObjectURL(url);
+///            }, 1000);
+///        };
+///        downloadURL = function (data, fileName) {
+///            var a;
+///            a = document.createElement('a');
+///            a.href = data;
+///            a.download = fileName;
+///            document.body.appendChild(a);
+///            a.style = 'display: none';
+///            a.click();
+///            a.remove();
+///        };
+/// let buf = await fetch("https://i.imgur.com/LYVUrUf.jpg", { referrer: "" }).then(r => r.arrayBuffer());
+/// let image = open_image_from_uint8array(new Uint8Array(buf));
+/// var array = to_jpeg_uint8array(image, 30);
+/// downloadBlob(array, 'some-file.jpg', 'image/jpeg');
+///  
+#[wasm_bindgen]
+pub fn to_jpeg_uint8array(img: PhotonImage, quality: u8) -> Vec<u8> {
+    let raw_pixels = img.raw_pixels;
+    let width = img.width;
+    let height = img.height;
+
+    let img_buffer = ImageBuffer::from_vec(width, height, raw_pixels).unwrap();
+    let dynimage = ImageRgba8(img_buffer);
+
+    let mut buf = Vec::new();
+    //let mut cursor = Cursor::new(Vec::new());
+
+    dynimage
+        .write_to(&mut buf, image::ImageOutputFormat::Jpeg(quality))
+        .unwrap();
+   
+    return buf;
+}
+
+/// decode image from Uint8Array and return Uint8Array of rgba8 with width bytes to end (a u32 as four u8 values):  
+/// on javascript use code below
+/// export default function(arrayBuffer) {
+///   if(arrayBuffer.constructor !== ArrayBuffer) {
+///     throw new Error("Expecting an arraybuffer as input");
+///   }
+///   let result = decode_image_from_uint8array(new Uint8Array(arrayBuffer));
+///   let data = result.slice(0, -4);
+///   let widthBytes = result.slice(-4);
+///   let width = (widthBytes[0] << 24) + (widthBytes[1] << 16) + (widthBytes[2] << 8) + (widthBytes[3] << 0);
+///   let imageData = {
+///     width,
+///     height: (data.length/4) / width,
+///     data,
+///   };
+///   return imageData;
+/// };
+#[wasm_bindgen]
+pub fn decode_image_from_uint8array(bytes: Vec<u8>) -> Vec<u8> {
+    console_error_panic_hook::set_once();
+
+    let img_buf = ImageReader::new(Cursor::new(bytes))
+        .with_guessed_format()
+        .unwrap()
+        .decode()
+        .unwrap()
+        .into_rgba8();
+    let width = img_buf.width();
+    let mut data = img_buf.into_raw();
+    // add width bytes to end (a u32 as four u8 values):
+    data.push((width >> 24) as u8);
+    data.push((width >> 16) as u8);
+    data.push((width >> 8) as u8);
+    data.push((width >> 0) as u8);
+    data
 }
 
 /// Convert ImageData to a raw pixel vec of u8s.
