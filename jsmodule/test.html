@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>wasm image decoder</title>
+</head>
+
+<body>
+    <script type="module">
+        //import decode from "./mod.js";
+        import init, { open_image_from_uint8array, filter, putImageData, to_jpeg_uint8array, resize_image_from_uint8array } from "./photon_rs.js";
+        await init();
+
+        var downloadBlob, downloadURL;
+        downloadBlob = function (data, fileName, mimeType) {
+            var blob, url;
+            blob = new Blob([data], {
+                type: mimeType
+            });
+            url = window.URL.createObjectURL(blob);
+            downloadURL(url, fileName);
+            setTimeout(function () {
+                return window.URL.revokeObjectURL(url);
+            }, 1000);
+        };
+        downloadURL = function (data, fileName) {
+            var a;
+            a = document.createElement('a');
+            a.href = data;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.style = 'display: none';
+            a.click();
+            a.remove();
+        };
+
+        if (true) {
+            console.log("start:");
+            let buf = await fetch("image.png", { referrer: "" }).then(r => r.arrayBuffer()); // huge jpg
+            let array = resize_image_from_uint8array(new Uint8Array(buf), 1024, 1024,80);
+            downloadBlob(array, 'some-file.jpg', 'image/jpeg');
+        }
+
+        /*if (true) {
+            console.log("wasm image decoder:");
+            var canvas = document.getElementById("canvas");
+            var ctx = canvas.getContext("2d");
+            // let buf = await fetch("https://i.imgur.com/uz9efia.png").then(r => r.arrayBuffer()); // tiny png
+            //let buf = await fetch("https://i.imgur.com/ys5iqwb.jpg").then(r => r.arrayBuffer()); // tiny jpg
+             let buf = await fetch("https://i.imgur.com/LYVUrUf.jpg", { referrer: "" }).then(r => r.arrayBuffer()); // huge jpg
+
+            let t1 = performance.now();
+
+            let image = open_image_from_uint8array(new Uint8Array(buf));
+            canvas.width = image.get_width();
+            canvas.height = image.get_height();
+            console.log(canvas);
+
+            // Filter the image, the PhotonImage's raw pixels are modified
+            //filter(image, "radio");
+
+            // Place the modified image back on the canvas
+            //putImageData(canvas, ctx, image);           
+
+            var array = to_jpeg_uint8array(image, 30);
+            downloadBlob(array, 'some-file.jpg', 'image/jpeg');
+
+            console.log(performance.now() - t1);
+        }*/
+
+        if (true) {
+            console.log("offscreen canvas:");
+            let canvas = new OffscreenCanvas(1, 1);
+            let ctx = canvas.getContext("2d");
+            let img = await new Promise(async (resolve) => {
+                let objUrl = await fetch("https://i.imgur.com/LYVUrUf.jpg", { referrer: "" }).then(r => r.blob()).then(b => URL.createObjectURL(b));
+                let img = new Image();
+                img.onload = () => resolve(img);
+                img.src = objUrl;
+            });
+            let t1 = performance.now();
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            var resize_width = 600;
+            
+            ctx.drawImage(img, 0, 0);
+            //console.log(ctx.getImageData(0, 0, canvas.width, canvas.height));
+            console.log(performance.now() - t1);
+        }
+
+
+    </script>
+    <canvas id="canvas" width="640" height="480"></canvas>
+</body>
+
+</html>

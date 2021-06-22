@@ -43,6 +43,7 @@ use base64::{decode, encode};
 use image::DynamicImage::ImageRgba8;
 use image::{GenericImage, GenericImageView, ImageBuffer};
 
+
 use image::io::Reader as ImageReader; //se atentar se isso não vai impactar no wasm
 use std::io::Cursor;
 
@@ -413,6 +414,41 @@ macro_rules! console_log {
     // `bare_bones`
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
+/// open image from a js Uint8Array and resize 
+#[wasm_bindgen]
+pub fn resize_image_from_uint8array(
+    bytes: Vec<u8>,
+    nwidth: u32,
+    nheight: u32,
+    quality: u8,
+) -> Vec<u8> {
+    console_error_panic_hook::set_once();
+    //let timer = std::time::Instant::now();
+    let timer = instant::Instant::now();
+    let img = image::load_from_memory(&bytes).unwrap();
+    //Mitchell (também conhecido como um Catmull-Rom de alta qualidade) é o melhor para aumentar
+    //Lanczosé uma das várias variantes práticas do sinc, melhor escolha padrão para reduzir imagens estáticas.
+    /*
+    Nearest	31 ms
+    Triangle	414 ms
+    CatmullRom	817 ms
+    Gaussian	1180 ms
+    Lanczos3	1170 ms
+    image::imageops::FilterType::Lanczos3
+    */
+     //let scaled  = image::imageops::resize(&img,nwidth, nheight, image::imageops::FilterType::Triangle);
+    let scaled = img.resize(nwidth, nheight, image::imageops::FilterType::Triangle);
+    //let dynimage = ImageRgba8(scaled);
+    let mut buf = Vec::new();
+    //let mut cursor = Cursor::new(Vec::new());
+
+    scaled
+        .write_to(&mut buf, image::ImageOutputFormat::Jpeg(quality))
+        .unwrap();
+
+    console_log!("Scaled {:?}", timer.elapsed());
+    return buf;
+}
 
 /// open image from a js Uint8Array and convert to rgba8 PhotonImage;
 #[wasm_bindgen]
@@ -441,7 +477,7 @@ pub fn open_image_from_uint8array(bytes: Vec<u8>) -> PhotonImage {
     }
 }
 /// create um uint8array of PhotonImage to uploud/download or manipulate on JavaScript
-/// 
+///
 /// var downloadBlob, downloadURL;
 ///        downloadBlob = function (data, fileName, mimeType) {
 ///            var blob, url;
@@ -484,7 +520,6 @@ pub fn to_jpeg_uint8array(img: PhotonImage, quality: u8) -> Vec<u8> {
     dynimage
         .write_to(&mut buf, image::ImageOutputFormat::Jpeg(quality))
         .unwrap();
-   
     return buf;
 }
 

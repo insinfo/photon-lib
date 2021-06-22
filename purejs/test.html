@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>teste</title>
+    <script id="script-photon" src="photon_rs.js"></script>
+    <script>
+        var downloadBlob, downloadURL;
+        downloadBlob = function (data, fileName, mimeType) {
+            var blob, url;
+            blob = new Blob([data], {
+                type: mimeType
+            });
+            url = window.URL.createObjectURL(blob);
+            downloadURL(url, fileName);
+            setTimeout(function () {
+                return window.URL.revokeObjectURL(url);
+            }, 1000);
+        };
+        downloadURL = function (data, fileName) {
+            var a;
+            a = document.createElement('a');
+            a.href = data;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.style = 'display: none';
+            a.click();
+            a.remove();
+        };
+
+        window.photon;
+        async function initPhoton() {
+            var scri = document.querySelector('#script-photon');
+            var url = scri.src.replace(/\.js$/, '_bg.wasm');
+            window.photon = await wasm_bindgen(url);
+
+        }
+
+        initPhoton();
+
+        /*function filterImage() {
+            // Create a canvas and get a 2D context from the canvas
+            var canvas = document.getElementById("canvas");
+            var ctx = canvas.getContext("2d");
+            var newimg = document.getElementById('img');
+
+            // Draw the image element onto the canvas
+            ctx.drawImage(newimg, 0, 0);
+
+            // Convert the ImageData found in the canvas to a PhotonImage (so that it can communicate with the core Rust library)
+            let image = photon.open_image(canvas, ctx);
+
+            // Filter the image, the PhotonImage's raw pixels are modified
+            window.photon.filter(image, "radio");
+
+            // Place the modified image back on the canvas
+            window.photon.putImageData(canvas, ctx, image);
+        }*/
+
+        window.onload = function (e) {
+            var inputFile = document.getElementById('file');
+            inputFile.onchange = async function (e) {
+                let t1 = performance.now();
+                var buf = await readFileAsArrayBuffer(inputFile.files[0]);
+                console.log(performance.now() - t1);
+                //let buf = await fetch("original.jpeg", { referrer: "" }).then(r => r.arrayBuffer()); // huge jpg              
+
+                let array = photon.resize_image_from_uint8array(new Uint8Array(buf), 1024, 1024, 80);
+                downloadBlob(array, 'some-file.jpg', 'image/jpeg');
+                console.log(performance.now() - t1);
+            }
+        };
+
+        async function readFileAsArrayBuffer(file) {
+            let result_base64 = await new Promise((resolve) => {
+                let fileReader = new FileReader();
+                fileReader.onload = (e) => resolve(fileReader.result);
+                fileReader.readAsArrayBuffer(file);
+            });
+            return result_base64;
+        }
+
+        async function readFileAsDataURL(file) {
+            let result_base64 = await new Promise((resolve) => {
+                let fileReader = new FileReader();
+                fileReader.onload = (e) => resolve(fileReader.result);
+                fileReader.readAsDataURL(file);
+            });
+            return result_base64;
+        }
+
+
+    </script>
+</head>
+
+<body>
+    <h1>teste</h1>
+    <input type="file" id="file"><br>
+    <img id="img" src="original.jpeg" width="640" height="480">
+    <canvas id="canvas" width="640" height="480"></canvas>
+</body>
+
+</html>
