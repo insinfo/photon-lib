@@ -1,8 +1,16 @@
 # photon-lib
-photon-lib
 
-fork from lib "Photon_rs" https://silvia-odwyer.github.io/photon/ Image processing on browser
-this fork implemented methods (open_image_from_uint8array, resize_image_from_uint8array, to_jpeg_uint8array, decode_image_from_uint8array) for manipulate Uint8Array of image file
+fork from lib "Photon_rs" https://silvia-odwyer.github.io/photon/ Image processing on browser.
+this fork implemented methods:
+
+```console
+open_image_from_uint8array
+resize_image_from_uint8array
+to_jpeg_uint8array
+decode_image_from_uint8array
+
+```
+for manipulate Uint8Array of image file
 
 ### example in "purejs" directory
 
@@ -103,7 +111,7 @@ this fork implemented methods (open_image_from_uint8array, resize_image_from_uin
 </head>
 
 <body>
-    <h1>teste</h1>
+    <h1>example</h1>
     <input type="file" id="file"><br>
     <img id="img" src="original.jpeg" width="640" height="480">
     <canvas id="canvas" width="640" height="480"></canvas>
@@ -112,7 +120,7 @@ this fork implemented methods (open_image_from_uint8array, resize_image_from_uin
 </html>
 ```
 
-compiled with:
+### compiled with:
 
 ```console
 //for inline javascript without modules
@@ -120,10 +128,11 @@ compiled with:
 //for ecmascript js modules
  wasm-pack build --target=web --out-dir=jsmodule --release 
 ```
-serve with:
+### serve with:
 
 ```console
- http .\pkg\
+ cd .\purejs
+ http
 ```
 #### to fix bug on generated no-modules version: change this lines of photon_rs.js in purejs version
 ```js
