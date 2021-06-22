@@ -3638,9 +3638,6 @@ let wasm_bindgen;
         imports.wbg.__wbindgen_object_drop_ref = function (arg0) {
             takeObject(arg0);
         };
-        imports.wbg.__wbg_log_e15f8a041a180d74 = function (arg0, arg1) {
-            console.log(getStringFromWasm0(arg0, arg1));
-        };
         imports.wbg.__wbg_new_59cb74e423758ede = function () {
             var ret = new Error();
             return addHeapObject(ret);
@@ -3764,10 +3761,6 @@ let wasm_bindgen;
         imports.wbg.__wbg_newnoargs_9fdd8f3961dd1bee = function (arg0, arg1) {
             var ret = new Function(getStringFromWasm0(arg0, arg1));
             return addHeapObject(ret);
-        };
-        imports.wbg.__wbg_now_0d452136c0f61bcc = function () {
-            var ret = Date.now();
-            return ret;
         };
         imports.wbg.__wbg_self_bb69a836a72ec6e9 = function () {
             return handleError(function () {

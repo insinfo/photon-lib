@@ -424,7 +424,7 @@ pub fn resize_image_from_uint8array(
 ) -> Vec<u8> {
     console_error_panic_hook::set_once();
     //let timer = std::time::Instant::now();
-    let timer = instant::Instant::now();
+    //let timer = instant::Instant::now();
     let img = image::load_from_memory(&bytes).unwrap();
     //Mitchell (também conhecido como um Catmull-Rom de alta qualidade) é o melhor para aumentar
     //Lanczosé uma das várias variantes práticas do sinc, melhor escolha padrão para reduzir imagens estáticas.
@@ -446,7 +446,7 @@ pub fn resize_image_from_uint8array(
         .write_to(&mut buf, image::ImageOutputFormat::Jpeg(quality))
         .unwrap();
 
-    console_log!("Scaled {:?}", timer.elapsed());
+    //console_log!("Scaled {:?}", timer.elapsed());
     return buf;
 }
 
